@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>농림위성 (CAS500-4) Launch</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #000;
+      overflow: hidden;
+      color: #fff;
+    }
+
+    body {
+      background: #000;
+    }
+
+    .screen {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: none;
+      background-image: url("rocket_horizontal_bg.png");
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to right,
+        rgba(0, 0, 0, 0.30) 0%,
+        rgba(0, 0, 0, 0.10) 45%,
+        rgba(0, 0, 0, 0.16) 100%
+      );
+      z-index: 0;
+    }
+
+    /* 모바일(세로) 화면: 세로형 이미지 + 위/아래를 어둡게 해 텍스트 가독성 확보 */
+    @media (orientation: portrait) {
+      .screen {
+        background-image: url("rocket_vertical_bg.png");
+        background-position: center center;
+      }
+
+      .screen::before {
+        background: linear-gradient(
+          to bottom,
+          rgba(0, 0, 0, 0.55) 0%,
+          rgba(0, 0, 0, 0.15) 26%,
+          rgba(0, 0, 0, 0.08) 55%,
+          rgba(0, 0, 0, 0.55) 100%
+        );
+      }
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      padding: 4vw;
+    }
+
+    /* =========================
+       1) COUNTDOWN SCREEN
+    ========================= */
+    .countdown-wrap {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 3vh;
+      text-align: center;
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 3rem;
+      text-shadow:
+        0 4px 12px rgba(0,0,0,0.45),
+        0 2px 4px rgba(0,0,0,0.35);
+    }
+
+    .title .line1 {
+      display: block;
+      width: fit-content;
+      font-size: clamp(2.6rem, 6vw, 5.5rem);
+      font-weight: 900;
+      white-space: nowrap;
+      margin-bottom: 1.1rem;
+      letter-spacing: -0.04em;
+    }
+
+    .title .line2 {
+      display: block;
+      width: fit-content;
+      font-size: clamp(5rem, 9vw, 8rem);
+      font-weight: 900;
+      white-space: nowrap;
+      letter-spacing: -0.05em;
+    }
+
+    .title .line3 {
+      display: block;
+      margin-bottom: 4rem;
+
+    }
+
+    .countdown-box {
+      display: block;
+      width: min(78vw, 980px);
+      margin: 0 auto;
+      border: 7px solid #d62828;
+      background: rgba(214, 40, 40, 0.10);
+      padding: 1.5rem 2.2rem 1.8rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      backdrop-filter: blur(2px);
+    }
+
+    .countdown-label {
+      text-align: center;
+      font-size: clamp(1.5rem, 2.2vw, 2.3rem);
+      font-weight: 800;
+      margin-bottom: 0.9rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+      letter-spacing: 0.03em;
+    }
+
+    .countdown {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.8rem;
+      flex-wrap: nowrap;
+      font-size: clamp(3.2rem, 5.3vw, 5.6rem);
+      font-weight: 900;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+    }
+
+    .count-item {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.2em;
+      white-space: nowrap;
+    }
+
+    .count-num {
+      min-width: 2ch;
+      text-align: right;
+    }
+
+    .count-unit {
+      font-size: 0.92em;
+    }
+
+    .subtext {
+      margin-top: 0.8rem;
+      font-size: clamp(1rem, 1.3vw, 1.2rem);
+      text-align: center;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+    }
+
+    /* =========================
+       2) PRELIVE SCREEN
+    ========================= */
+    .message-wrap {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 1.6rem;
+      padding: 4vw;
+    }
+
+    .message-title {
+      font-size: clamp(3rem, 6.5vw, 6rem);
+      font-weight: 900;
+      line-height: 1.08;
+      text-shadow:
+        0 4px 12px rgba(0,0,0,0.45),
+        0 2px 4px rgba(0,0,0,0.35);
+    }
+
+    .message-desc {
+      font-size: clamp(1.5rem, 2.5vw, 2.3rem);
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+    }
+
+    .prelive-box {
+      border: 6px solid #d62828;
+      background: rgba(214, 40, 40, 0.12);
+      padding: 1.2rem 2rem;
+      min-width: min(70vw, 820px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+    }
+
+    .prelive-time {
+      font-size: clamp(2rem, 4vw, 4rem);
+      font-weight: 900;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+      letter-spacing: 0.04em;
+    }
+
+    /* =========================
+       3) LIVE SCREEN
+    ========================= */
+    .live-layout {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 3vw;
+    }
+
+    .live-message {
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 1.4rem;
+    }
+
+    .live-message.active {
+      display: flex;
+    }
+
+    .live-embed-wrap {
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .live-embed-wrap.active {
+      display: flex;
+    }
+
+    .live-header {
+      text-align: center;
+      font-size: clamp(1.8rem, 3vw, 3rem);
+      font-weight: 900;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+    }
+
+    .live-player {
+      flex: 1;
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      background: #000;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    }
+
+    /* =========================
+       개발용 테스트 패널
+    ========================= */
+    .test-panel {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+      background: rgba(0, 0, 0, 0.72);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 12px;
+      backdrop-filter: blur(6px);
+    }
+
+    .test-panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      opacity: 0.92;
+    }
+
+    .test-panel-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 260px;
+    }
+
+    .test-btn {
+      appearance: none;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #fff;
+      background: #444;
+    }
+
+    .test-btn:hover {
+      filter: brightness(1.08);
+    }
+
+    .test-btn.auto {
+      background: #2563eb;
+    }
+
+    .test-btn.countdown {
+      background: #16a34a;
+    }
+
+    .test-btn.prelive {
+      background: #d97706;
+    }
+
+    .test-btn.live {
+      background: #dc2626;
+    }
+
+    @media (max-width: 900px) {
+      .countdown {
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .countdown-box {
+        width: min(90vw, 980px);
+      }
+
+      .prelive-box {
+        min-width: min(86vw, 820px);
+      }
+
+      .test-panel {
+        right: 12px;
+        bottom: 12px;
+        padding: 10px;
+      }
+    }
+
+    /* =========================
+       모바일(세로) 전용 레이아웃
+       - 사진 속 로켓 몸체가 화면 중앙을 차지하므로
+         텍스트 블록은 위(하늘)와 아래(발사대/풀밭)로 분산 배치
+    ========================= */
+    @media (orientation: portrait) {
+      .screen {
+        height: 100vh;
+        height: 100dvh;
+      }
+
+      .content {
+        padding: 5vh 5vw;
+      }
+
+      /* 1) 카운트다운 화면: 타이틀은 위쪽 하늘, 카운트박스는 아래쪽 발사대 영역 */
+      .countdown-wrap {
+        justify-content: space-between;
+        padding-top: 0;
+      }
+
+      .title {
+        margin-bottom: 0;
+      }
+
+      .title .line1 {
+        font-size: clamp(1.5rem, 6.5vw, 2.4rem);
+        white-space: normal;
+        margin-bottom: 0.5rem;
+      }
+
+      .title .line2 {
+        font-size: clamp(2.6rem, 13vw, 4.2rem);
+      }
+
+      .title .line3 {
+        font-size: clamp(0.85rem, 3.2vw, 1.1rem);
+        margin-bottom: 0;
+      }
+
+      .countdown-box {
+        width: 92vw;
+        padding: 1.1rem 1.2rem 1.3rem;
+        border-width: 5px;
+      }
+
+      .countdown-label {
+        font-size: clamp(1rem, 4vw, 1.3rem);
+        margin-bottom: 0.6rem;
+      }
+
+      .countdown {
+        gap: 0.5rem 0.9rem;
+        font-size: clamp(1.7rem, 8vw, 2.6rem);
+      }
+
+      .subtext {
+        margin-top: 1rem;
+        font-size: clamp(0.85rem, 3vw, 1rem);
+      }
+
+      /* 2) 4시간 전 화면 */
+      .message-wrap {
+        padding: 6vh 6vw;
+        gap: 1.1rem;
+      }
+
+      .message-title {
+        font-size: clamp(1.9rem, 8.5vw, 3rem);
+        line-height: 1.15;
+      }
+
+      .message-desc {
+        font-size: clamp(1rem, 4vw, 1.4rem);
+      }
+
+      .prelive-box {
+        width: 92vw;
+        min-width: 0;
+        padding: 1rem 1.4rem;
+        border-width: 5px;
+      }
+
+      .prelive-time {
+        font-size: clamp(1.8rem, 9vw, 2.8rem);
+      }
+
+      /* 3) 라이브 화면 */
+      .live-layout {
+        padding: 6vh 6vw;
+      }
+
+      .live-message {
+        gap: 1.1rem;
+      }
+
+      .live-header {
+        font-size: clamp(1.2rem, 5.5vw, 1.8rem);
+      }
+
+      .live-embed-wrap {
+        gap: 0.6rem;
+      }
+
+      /* 개발용 테스트 패널: 모바일에서 더 작고 컴팩트하게 */
+      .test-panel {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        padding: 8px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .test-panel-title {
+        display: none;
+      }
+
+      .test-panel-buttons {
+        max-width: none;
+        gap: 6px;
+      }
+
+      .test-btn {
+        padding: 8px 9px;
+        font-size: 11px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1) 카운트다운 화면 -->
+  <section id="countdownScreen" class="screen active">
+    <div class="content countdown-wrap">
+      <h1 class="title">
+        <span class="line1">농림위성 (CAS500-4)</span>
+        <span class="line2">Launch</span>
+        <span class="line3">Launch Time: 2026.07.08 16:10 (KST)</span>
+
+      </h1>
+
+      <div class="countdown-box">
+        <div class="countdown-label">COUNTDOWN</div>
+        <div id="countdown" class="countdown"></div>
+      </div>
+
+      
+    </div>
+  </section>
+
+  <!-- 2) 4시간 전 안내 화면 -->
+  <section id="preliveScreen" class="screen">
+    <div class="content message-wrap">
+      <div class="message-title">생중계 유튜브가<br>곧 방영됩니다</div>
+      <div class="message-desc">농림위성 (CAS500-4) 발사 생중계 준비 중</div>
+
+      <div class="prelive-box">
+        <div class="countdown-label">LIVE STARTS IN</div>
+        <div id="preliveCountdown" class="prelive-time">--:--:--</div>
+      </div>
+
+      <div class="subtext">30분 전부터 생중계 화면으로 자동 전환됩니다</div>
+    </div>
+  </section>
+
+  <!-- 3) 라이브 화면 -->
+  <section id="liveScreen" class="screen">
+    <div class="live-layout">
+      <!-- 직접 이동 모드(true)용 안내 화면 -->
+      <div id="liveMessage" class="live-message">
+        <div class="message-title">생중계 화면으로<br>전환합니다</div>
+        <div class="message-desc">잠시 후 YouTube 생중계로 연결됩니다</div>
+
+        <div class="prelive-box">
+          <div class="countdown-label">REDIRECTING IN</div>
+          <div id="redirectCountdown" class="prelive-time">03</div>
+        </div>
+
+        <div class="subtext">자동으로 생중계 페이지로 이동합니다</div>
+      </div>
+
+      <!-- 임베드 모드(false)용 -->
+      <div id="liveEmbedWrap" class="live-embed-wrap">
+        <div class="live-header">농림위성 (CAS500-4) 생중계</div>
+        <iframe
+          id="liveFrame"
+          class="live-player"
+          src=""
+          title="YouTube live"
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- 개발용 테스트 패널 -->
+  <div class="test-panel" id="testPanel">
+    <div class="test-panel-title">개발용 시나리오 테스트</div>
+    <div class="test-panel-buttons">
+      <button class="test-btn auto" data-test-mode="auto">자동 모드</button>
+      <button class="test-btn countdown" data-test-mode="countdown">카운트다운</button>
+      <button class="test-btn prelive" data-test-mode="prelive">4시간 전</button>
+      <button class="test-btn live" data-test-mode="live">30분 전/라이브</button>
+    </div>
+  </div>
+
+  <script>
+    /* =========================
+       설정
+    ========================= */
+    const targetDate = new Date("2026-07-07T16:10:00+09:00");
+    const FOUR_HOURS = 4 * 60 * 60 * 1000;
+    const THIRTY_MIN = 30 * 60 * 1000;
+
+    const useDirectYoutubeRedirect = true;
+    // true  = 3초 안내 후 유튜브 페이지로 직접 이동
+    // false = 현재 페이지 안에 유튜브 iframe 임베드 시도
+    // file:// 환경에서는 false일 때 YouTube 153 에러가 날 수 있음
+
+    const redirectDelayMs = 3000;
+
+    const youtubeWatchUrl = "https://www.youtube.com/watch?v=thfYPsRqxmw";
+    const youtubeEmbedUrl = "https://www.youtube.com/embed/thfYPsRqxmw?autoplay=1&playsinline=1&rel=0";
+
+    /* =========================
+       DOM
+    ========================= */
+    const countdownScreen = document.getElementById("countdownScreen");
+    const preliveScreen = document.getElementById("preliveScreen");
+    const liveScreen = document.getElementById("liveScreen");
+
+    const countdownEl = document.getElementById("countdown");
+    const preliveCountdownEl = document.getElementById("preliveCountdown");
+
+    const liveMessage = document.getElementById("liveMessage");
+    const liveEmbedWrap = document.getElementById("liveEmbedWrap");
+    const liveFrame = document.getElementById("liveFrame");
+    const redirectCountdownEl = document.getElementById("redirectCountdown");
+
+    /* =========================
+       상태값
+    ========================= */
+    let currentMode = "";
+    let liveLoaded = false;
+    let testMode = "auto";
+    let simulatedTargetDate = null;
+
+    let redirectTimer = null;
+    let redirectCountdownTimer = null;
+    let redirectScheduled = false;
+
+    /* =========================
+       공통 함수
+    ========================= */
+    function makeItem(num, unit) {
+      return `
+        <span class="count-item">
+          <span class="count-num">${String(num).padStart(2, "0")}</span>
+          <span class="count-unit">${unit}</span>
+        </span>
+      `;
+    }
+
+    function formatHMS(ms) {
+      const safeMs = Math.max(0, ms);
+      const totalSeconds = Math.floor(safeMs / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    function renderCountdown(ms) {
+      const safeMs = Math.max(0, ms);
+      const totalSeconds = Math.floor(safeMs / 1000);
+
+      const days = Math.floor(totalSeconds / (60 * 60 * 24));
+      const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60));
+      const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+      const seconds = totalSeconds % 60;
+
+      countdownEl.innerHTML =
+        makeItem(days, "D") +
+        makeItem(hours, "H") +
+        makeItem(minutes, "M") +
+        makeItem(seconds, "S");
+    }
+
+    function clearRedirectTimers() {
+      if (redirectTimer) {
+        clearTimeout(redirectTimer);
+        redirectTimer = null;
+      }
+
+      if (redirectCountdownTimer) {
+        clearInterval(redirectCountdownTimer);
+        redirectCountdownTimer = null;
+      }
+
+      redirectScheduled = false;
+    }
+
+    /* =========================
+       화면 전환
+    ========================= */
+    function showScreen(mode) {
+      countdownScreen.classList.remove("active");
+      preliveScreen.classList.remove("active");
+      liveScreen.classList.remove("active");
+
+      liveMessage.classList.remove("active");
+      liveEmbedWrap.classList.remove("active");
+
+      if (mode !== "live") {
+        clearRedirectTimers();
+      }
+
+      if (mode === "countdown") {
+        countdownScreen.classList.add("active");
+      }
+
+      if (mode === "prelive") {
+        preliveScreen.classList.add("active");
+      }
+
+      if (mode === "live") {
+        liveScreen.classList.add("active");
+
+        if (useDirectYoutubeRedirect) {
+          liveMessage.classList.add("active");
+
+          if (!redirectScheduled) {
+            redirectScheduled = true;
+
+            let secondsLeft = Math.ceil(redirectDelayMs / 1000);
+            redirectCountdownEl.textContent = String(secondsLeft).padStart(2, "0");
+
+            redirectCountdownTimer = setInterval(() => {
+              secondsLeft -= 1;
+              if (secondsLeft >= 0) {
+                redirectCountdownEl.textContent = String(secondsLeft).padStart(2, "0");
+              }
+            }, 1000);
+
+            redirectTimer = setTimeout(() => {
+              window.location.href = youtubeWatchUrl;
+            }, redirectDelayMs);
+          }
+        } else {
+          liveEmbedWrap.classList.add("active");
+
+          if (!liveLoaded) {
+            liveFrame.src = youtubeEmbedUrl;
+            liveLoaded = true;
+          }
+        }
+      }
+
+      currentMode = mode;
+    }
+
+    /* =========================
+       테스트 모드
+    ========================= */
+    function setTestMode(mode) {
+      testMode = mode;
+
+      if (mode === "auto") {
+        simulatedTargetDate = null;
+      }
+
+      if (mode === "countdown") {
+        simulatedTargetDate = new Date(
+          Date.now() +
+          (27 * 24 * 60 * 60 * 1000) +
+          (2 * 60 * 60 * 1000) +
+          (24 * 60 * 1000) +
+          (18 * 1000)
+        );
+      }
+
+      if (mode === "prelive") {
+        // 지금을 발사 4시간 전이라고 가정
+        simulatedTargetDate = new Date(Date.now() + FOUR_HOURS);
+      }
+
+      if (mode === "live") {
+        // 지금을 발사 30분 전이라고 가정
+        simulatedTargetDate = new Date(Date.now() + THIRTY_MIN);
+      }
+
+      updateView();
+    }
+
+    /* =========================
+       메인 업데이트
+    ========================= */
+    function updateView() {
+      const activeTargetDate = simulatedTargetDate || targetDate;
+      const now = new Date();
+      const diff = activeTargetDate - now;
+
+      if (diff <= THIRTY_MIN) {
+        if (currentMode !== "live") showScreen("live");
+        return;
+      }
+
+      if (diff <= FOUR_HOURS) {
+        if (currentMode !== "prelive") showScreen("prelive");
+        preliveCountdownEl.textContent = formatHMS(diff);
+        return;
+      }
+
+      if (currentMode !== "countdown") showScreen("countdown");
+      renderCountdown(diff);
+    }
+
+    /* =========================
+       실행
+    ========================= */
+    updateView();
+    setInterval(updateView, 1000);
+
+    document.querySelectorAll("[data-test-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setTestMode(btn.dataset.testMode);
+      });
+    });
+  </script>
+</body>
+</html>
