@@ -369,8 +369,6 @@
 
     /* =========================
        모바일(세로) 전용 레이아웃
-       - 사진 속 로켓 몸체가 화면 중앙을 차지하므로
-         텍스트 블록은 위(하늘)와 아래(발사대/풀밭)로 분산 배치
     ========================= */
     @media (orientation: portrait) {
       .screen {
@@ -382,10 +380,11 @@
         padding: 5vh 5vw;
       }
 
-      /* 1) 카운트다운 화면: 타이틀은 위쪽 하늘, 카운트박스는 아래쪽 발사대 영역 */
+      /* 1) 카운트다운 화면: 타이틀+카운트박스를 화면 중앙으로 모음 */
       .countdown-wrap {
-        justify-content: space-between;
+        justify-content: center;
         padding-top: 0;
+        gap: 2.2rem;
       }
 
       .title {
